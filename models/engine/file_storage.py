@@ -16,7 +16,7 @@ class FileStorage:
         with open(self.__file_path, "w") as f:
             json.dump(self.__objects, f)
 
-  def reload(self):
+def reload(self):
     try:
         with open(self.__file_path, "r") as f:
             data = json.load(f)
@@ -27,4 +27,6 @@ class FileStorage:
                 obj = BaseModel(**obj_data)
                 self.__objects[obj_id] = obj
     except FileNotFoundError:
-        pass
+        pass  
+           
+   
