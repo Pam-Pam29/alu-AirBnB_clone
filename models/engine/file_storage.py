@@ -5,6 +5,7 @@ from models.base_model import BaseModel  # Import your model classes
 
 class FileStorage:
     """Serializes instances to a JSON file and deserializes JSON file to instances."""
+    
     __file_path = "file.json"
     __objects = {}
 
@@ -30,8 +31,8 @@ class FileStorage:
                 json_obj = json.load(f)
                 for key, value in json_obj.items():
                     class_name = value['__class__']
-                    # Assuming that only BaseModel is being used; for a more flexible solution, you might need to handle more classes dynamically
-                    cls = globals().get(class_name, None)
-                    if cls:
-                        obj = cls(**value)
-                        self.__objects[key] = obj
+                    module_name = f"models.{class_name.lower()}"  # Assuming all classes are in models and named in lowercase
+                    module = __import__(module_name, fromlist=[class_name])
+                    cls = getattr(module, class_name)
+                    obj = cls(**value)
+                    self.__objects[key] = obj
