@@ -1,14 +1,7 @@
-from models import storage
-
 class BaseModel:
-    # ...
-
-    def save(self):
-        storage.new(self)
-        storage.save()
+    _next_id = 1
 
     def __init__(self, *args, **kwargs):
-        if not kwargs:
-            # Create a new instance
-            storage.new(self)
-        super().__init__(*args, **kwargs)
+        self.id = BaseModel._next_id
+        BaseModel._next_id += 1
+        # ...
