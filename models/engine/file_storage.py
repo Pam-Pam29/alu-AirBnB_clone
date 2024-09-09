@@ -1,8 +1,9 @@
 import json
 import os
+from datetime import datetime
+from models.base_model import BaseModel
 
 class FileStorage:
-    """Serializes instances to a JSON file and deserializes JSON file to instances."""
     __file_path = "file.json"
     __objects = {}
 
@@ -27,8 +28,8 @@ class FileStorage:
             with open(self.__file_path, 'r') as f:
                 json_obj = json.load(f)
                 for key, value in json_obj.items():
-                    class_name = value['__class__']
-                    # Dynamically import and instantiate the class using the dictionary
-                    cls = globals()[class_name]
+                    # Assuming BaseModel is the only class to be deserialized for now
+                    cls = globals()[value['__class__']]
                     obj = cls(**value)
                     self.__objects[key] = obj
+
