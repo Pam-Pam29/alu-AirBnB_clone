@@ -1,1 +1,2 @@
-
+storage = FileStorage()
+storage.reload()
