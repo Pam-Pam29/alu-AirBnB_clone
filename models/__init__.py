@@ -1,4 +1,8 @@
+#!/usr/bin/python3
+
+"""__init__ magic method for models directory"""
 from models.engine.file_storage import FileStorage
 
-storage = FileStorage()  # Create a single instance of FileStorage
-storage.reload()  # Call reload to load existing data from the JSON file
+
+storage = FileStorage()
+storage.reload()
