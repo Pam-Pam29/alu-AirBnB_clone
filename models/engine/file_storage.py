@@ -9,16 +9,19 @@ from models.place import Place
 from models.amenity import Amenity
 from models.review import Review
 
-
 class FileStorage:
-    """Represent an abstracted storage engine.
+    def __init__(self, file_path):
+        self.file_path = file_path
 
-    Attributes:
-        __file_path (str): The name of the file to save objects to.
-        __objects (dict): A dictionary of instantiated objects.
-    """
-    __file_path = "file.json"
-    __objects = {}
+    def reload(self):
+        try:
+            with open(self.file_path, 'r') as f:
+                objdict = json.load(f)
+        except FileNotFoundError:
+            objdict = {}
+        except json.JSONDecodeError:
+            objdict = {}
+        return objdict
 
     def all(self):
         """Return the dictionary __objects."""
@@ -36,14 +39,14 @@ class FileStorage:
         with open(FileStorage.__file_path, "w") as f:
             json.dump(objdict, f)
 
-    def reload(self):
-        """Deserialize the JSON file __file_path to __objects, if it exists."""
-        try:
-            with open(FileStorage.__file_path) as f:
-                objdict = json.load(f)
-                for o in objdict.values():
-                    cls_name = o["__class__"]
-                    del o["__class__"]
-                    self.new(eval(cls_name)(**o))
-        except FileNotFoundError:
-            return
+   def reload(self):
+    try:
+        with open(self.file_path, 'r') as f:
+            objdict = json.load(f)
+    except FileNotFoundError:
+        print("Error: The JSON file doesn't exist.")
+        objdict = {}
+    except json.JSONDecodeError as e:
+        print(f"Error: The JSON file is not properly formatted. {e}")
+        objdict = {}
+    return objdict
