@@ -16,183 +16,155 @@ from unittest.mock import patch
 from io import StringIO
 from console import HBNBCommand
 
-class TestConsole(unittest.TestCase):
-    def setUp(self):
-        self.console = HBNBCommand()
 
-    def test_help_command(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("help")
-            output = f.getvalue().strip()
-            self.assertIn("Documented commands:", output)
+class TestHBNBCommand(unittest.TestCase):
+    """Unittests for testing the HBNBCommand console."""
 
-    def test_show_command(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("show")
-            output = f.getvalue().strip()
-            self.assertIn("No instance found with that ID", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_emptyline(self, mock_stdout):
+        """Test that empty line does not execute any command."""
+        console = HBNBCommand()
+        console.onecmd("")
+        self.assertEqual(mock_stdout.getvalue(), "")
 
-    def test_create_command(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("create BaseModel")
-            output = f.getvalue().strip()
-            self.assertIn("Instance created successfully", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_quit(self, mock_stdout):
+        """Test quit command to exit the program."""
+        console = HBNBCommand()
+        self.assertTrue(console.onecmd("quit"))
 
-    def test_destroy_command(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("destroy BaseModel 1234")
-            output = f.getvalue().strip()
-            self.assertIn("Instance deleted successfully", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_EOF(self, mock_stdout):
+        """Test EOF command to exit the program."""
+        console = HBNBCommand()
+        self.assertTrue(console.onecmd("EOF"))
 
-    def test_all_command(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("all")
-            output = f.getvalue().strip()
-            self.assertIn("Instances found:", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_create_missing_class(self, mock_stdout):
+        """Test create command with no class name."""
+        console = HBNBCommand()
+        console.onecmd("create")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** class name missing **")
 
-    def test_update_command(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("update BaseModel 1234 name 'New Name'")
-            output = f.getvalue().strip()
-            self.assertIn("Instance updated successfully", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_create_invalid_class(self, mock_stdout):
+        """Test create command with invalid class name."""
+        console = HBNBCommand()
+        console.onecmd("create InvalidClass")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** class doesn't exist **")
 
-    def test_invalid_command(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("invalid_command")
-            output = f.getvalue().strip()
-            self.assertIn("Unknown syntax:", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_create_valid_class(self, mock_stdout):
+        """Test create command with valid class name."""
+        console = HBNBCommand()
+        with patch('models.storage.save'):
+            console.onecmd("create User")
+        output = mock_stdout.getvalue().strip()
+        self.assertRegex(output, r'[a-f0-9-]+')
 
-    def test_quit_command(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("quit")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "")
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_show_missing_class(self, mock_stdout):
+        """Test show command with missing class name."""
+        console = HBNBCommand()
+        console.onecmd("show")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** class name missing **")
 
-    def test_eof(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "")
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_show_invalid_class(self, mock_stdout):
+        """Test show command with invalid class name."""
+        console = HBNBCommand()
+        console.onecmd("show InvalidClass")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** class doesn't exist **")
 
-    def test_empty_line(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "")
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_show_missing_id(self, mock_stdout):
+        """Test show command with missing id."""
+        console = HBNBCommand()
+        console.onecmd("show User")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** instance id missing **")
 
-    def test_base_model_all(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("BaseModel.all()")
-            output = f.getvalue().strip()
-            self.assertIn("Instances found:", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_show_no_instance_found(self, mock_stdout):
+        """Test show command with non-existent id."""
+        console = HBNBCommand()
+        console.onecmd("show User 1234-5678")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** no instance found **")
 
-    def test_base_model_count(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("BaseModel.count()")
-            output = f.getvalue().strip()
-            self.assertIn("Count:", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_destroy_missing_class(self, mock_stdout):
+        """Test destroy command with missing class name."""
+        console = HBNBCommand()
+        console.onecmd("destroy")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** class name missing **")
 
-    def test_base_model_show(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("BaseModel.show(1234)")
-            output = f.getvalue().strip()
-            self.assertIn("Instance found:", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_destroy_invalid_class(self, mock_stdout):
+        """Test destroy command with invalid class name."""
+        console = HBNBCommand()
+        console.onecmd("destroy InvalidClass")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** class doesn't exist **")
 
-    def test_base_model_destroy(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("BaseModel.destroy(1234)")
-            output = f.getvalue().strip()
-            self.assertIn("Instance deleted successfully", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_destroy_missing_id(self, mock_stdout):
+        """Test destroy command with missing id."""
+        console = HBNBCommand()
+        console.onecmd("destroy User")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** instance id missing **")
 
-    def test_base_model_update(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("BaseModel.update(1234, 'name', 'New Name')")
-            output = f.getvalue().strip()
-            self.assertIn("Instance updated successfully", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_destroy_no_instance_found(self, mock_stdout):
+        """Test destroy command with non-existent id."""
+        console = HBNBCommand()
+        console.onecmd("destroy User 1234-5678")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** no instance found **")
 
-    def test_user_all(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("User.all()")
-            output = f.getvalue().strip()
-            self.assertIn("Instances found:", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_all_invalid_class(self, mock_stdout):
+        """Test all command with invalid class name."""
+        console = HBNBCommand()
+        console.onecmd("all InvalidClass")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** class doesn't exist **")
 
-    def test_user_count(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("User.count()")
-            output = f.getvalue().strip()
-            self.assertIn("Count:", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_count_invalid_class(self, mock_stdout):
+        """Test count command with invalid class name."""
+        console = HBNBCommand()
+        console.onecmd("count InvalidClass")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** class doesn't exist **")
 
-    def test_user_show(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("User.show(1234)")
-            output = f.getvalue().strip()
-            self.assertIn("Instance found:", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_update_missing_class(self, mock_stdout):
+        """Test update command with missing class name."""
+        console = HBNBCommand()
+        console.onecmd("update")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** class name missing **")
 
-    def test_user_destroy(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("User.destroy(1234)")
-            output = f.getvalue().strip()
-            self.assertIn("Instance deleted successfully", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_update_invalid_class(self, mock_stdout):
+        """Test update command with invalid class name."""
+        console = HBNBCommand()
+        console.onecmd("update InvalidClass")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** class doesn't exist **")
 
-    def test_user_update(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("User.update(1234, 'name', 'New Name')")
-            output = f.getvalue().strip()
-            self.assertIn("Instance updated successfully", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_update_missing_id(self, mock_stdout):
+        """Test update command with missing id."""
+        console = HBNBCommand()
+        console.onecmd("update User")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** instance id missing **")
 
-    def test_state_all(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("State.all()")
-            output = f.getvalue().strip()
-            self.assertIn("Instances found:", output)
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_update_no_instance_found(self, mock_stdout):
+        """Test update command with non-existent id."""
+        console = HBNBCommand()
+        console.onecmd("update User 1234-5678")
+        self.assertEqual(mock_stdout.getvalue().strip(), "** no instance found **")
 
-    def test_state_count(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("State.count()")
-            output = f.getvalue().strip()
-            self.assertIn("Count:", output)
+    # Additional tests can be added for advanced functionality like:
+    # - Update with dictionaries
+    # - Testing the all method for specific class filtering
+    # - Testing command formats like <class>.show(<id>)
 
-    def test_state_show(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("State.show(1234)")
-            output = f.getvalue().strip()
-            self.assertIn("Instance found:", output)
 
-    def test_state_destroy(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("State.destroy(1234)")
-            output = f.getvalue().strip()
-            self.assertIn("Instance deleted successfully", output)
-
-    def test_state_update(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("State.update(1234, 'name', 'New Name')")
-            output = f.getvalue().strip()
-            self.assertIn("Instance updated successfully", output)
-
-    def test_city_all(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("City.all()")
-            output = f.getvalue().strip()
-            self.assertIn("Instances found:", output)
-
-    def test_city_count(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("City.count()")
-            output = f.getvalue().strip()
-            self.assertIn("Count:", output)
-
-    def test_city_show(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("City.show(1234)")
-            output = f.getvalue().strip()
-            self.assertIn("Instance found:", output)
-
-    def test_city_destroy(self):
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.console.onecmd("City.destroy(1234)")
-            output = f.getvalue().strip()
-            self.assertIn("Instance deleted successfully", output)
-
-    def test_city_update(self):
-        with patch('sys.stdout', new=StringIO()) as
+if __name__ == "__main__":
+    unittest.main()
